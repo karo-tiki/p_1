@@ -206,6 +206,26 @@ class CreatePersonServiceTest {
         );
     }
 
+    @Test
+    @DisplayName("Retorna false si el repositorio falla al guardar la categoría")
+    void addCategoryToPerson_RepositorySaveFails_ReturnsFalse() {
+        // Arrange
+        CreatePersonCategoryDTO categoryDTO = new CreatePersonCategoryDTO("ana@email.com", "Food");
+        
+        // 1. La persona existe
+        when(personRepository.findById(any(PersonID.class))).thenReturn(Optional.of(mockPerson));
+        // 2. La categoría NO existe (validación de duplicado pasa)
+        when(categoryRepository.findById(anyString(), anyString())).thenReturn(Optional.empty());
+        // 3. Simulamos que el guardado falla por una restricción de integridad o error de DB
+        when(personRepository.addAndSaveCategory(any(Person.class))).thenReturn(false);
+
+        // Act
+        boolean result = createPersonService.addCategoryToPerson(categoryDTO);
+
+        // Assert
+        assertFalse(result, "Debería retornar false si la persistencia falló");
+        verify(personRepository, times(1)).addAndSaveCategory(any(Person.class));
+    }
     // ==================== constantes ====================
 
     @Test
